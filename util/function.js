@@ -153,8 +153,7 @@ exports.grouping = function (members) {
         // 最大班人数でメンバーの余りを計算
         var remainder = members.length % hirumiConst.MAX_MEMBER_NUM;
 
-        // 完全に割り切れた場合
-        if (remainder === 0) {
+        if (remainder === 0) {  // 完全に割り切れた場合
             // 参加人数＝最大班人数ならそのまま班を作成
             if (members.length === hirumiConst.MAX_MEMBER_NUM) {
                 memberList[idx] = members.concat();
@@ -164,8 +163,7 @@ exports.grouping = function (members) {
                 memberList[idx] = members.concat().slice(0, hirumiConst.MAX_MEMBER_NUM);
                 members.splice(0, hirumiConst.MAX_MEMBER_NUM);
             }
-            // 余りが最小班人数以下の場合
-        } else if (remainder <= hirumiConst.MIN_MEMBER_NUM) {
+        } else if (remainder <= hirumiConst.MIN_MEMBER_NUM) {   // 余りが最小班人数以下の場合
             // 参加人数が最小班人数以下ならそのまま班を作成
             if (members.length <= hirumiConst.MIN_MEMBER_NUM) {
                 memberList[idx] = members.concat().slice(0, members.length);
@@ -175,8 +173,7 @@ exports.grouping = function (members) {
                 memberList[idx] = members.concat().slice(0, hirumiConst.MIN_MEMBER_NUM);
                 members.splice(0, hirumiConst.MIN_MEMBER_NUM);
             }
-            // 余りが最小班人数より多い場合は最大班人数で班を作成
-        } else {
+        } else {    // 余りが最小班人数より多い場合は最大班人数で班を作成
             memberList[idx] = members.concat().slice(0, hirumiConst.MAX_MEMBER_NUM);
             members.splice(0, hirumiConst.MAX_MEMBER_NUM);
         }
