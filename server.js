@@ -81,7 +81,9 @@ bot.dialog('/', function (session) {
         if (wasFound) {
             memberList = hirumiUtil.readFile(listFilePath);
             session.send('現在' + memberList.length + '人です！');
-            session.send('参加予定メンバー：' + memberList.join(hirumiConst.DISPLAY_SEPARATOR));
+            if (memberList.length > 0) {
+                session.send('参加予定メンバー：' + memberList.join(hirumiConst.DISPLAY_SEPARATOR));
+            }
             return;
         }
 
@@ -91,10 +93,14 @@ bot.dialog('/', function (session) {
         if (wasFound) {
             memberList = hirumiUtil.readFile(listFilePath);
             memberList = hirumiUtil.makeMembers(memberList);
-            session.send('はーい！');
-            session.send('メンバーはこちら！');
-            for (var i in memberList) {
-                session.send((parseInt(i) + 1) + '班：' + memberList[i].join(hirumiConst.DISPLAY_SEPARATOR));
+            if (memberList.length > 0) {
+                session.send('はーい！');
+                session.send('メンバーはこちら！');
+                for (var i in memberList) {
+                    session.send((parseInt(i) + 1) + '班：' + memberList[i].join(hirumiConst.DISPLAY_SEPARATOR));
+                }
+            } else {
+                session.send('参加者が1人もいません。。。');
             }
             return;
         }
