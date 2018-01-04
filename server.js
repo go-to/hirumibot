@@ -22,6 +22,7 @@ bot.dialog('/', function (session) {
         var today = hirumiUtil.getToday();
         var text = session.message.text;
         var userName = session.message.user.name;
+        var memberList = [];
 
         // 今日日付のファイルがなければ作成する
         var listFilePath = hirumiConst.FILE_DIR + today + '.txt';
@@ -44,16 +45,13 @@ bot.dialog('/', function (session) {
         if (wasFound) {
             wasFound = hirumiUtil.findWord(userName, listFilePath);
             if (wasFound) {
-                var userList = hirumiUtil.readFile(listFilePath);
-                for (var i in userList) {
-                    var memberName = userList[i];
-                    if (memberName === '') {
-                        continue;
-                    }
+                memberList = hirumiUtil.readFile(listFilePath);
+                for (var i in memberList) {
+                    var memberName = memberList[i];
                     if (memberName === userName) {
-                        userList.splice(i, 1);
-                        var userListStr = userList.join(hirumiConst.LINEFEED);
-                        hirumiUtil.overwriteNameToFile(userListStr, listFilePath);
+                        memberList.splice(i, 1);
+                        var memberListStr = memberList.join(hirumiConst.LINEFEED);
+                        hirumiUtil.overwriteNameToFile(memberListStr, listFilePath);
                         break;
                     }
                 }
@@ -81,14 +79,7 @@ bot.dialog('/', function (session) {
         wordFilePath = hirumiConst.WORD_LIST_DIR + hirumiConst.WORD_LIST_FILE_STATUS;
         wasFound = hirumiUtil.findWord(text, wordFilePath);
         if (wasFound) {
-            members = hirumiUtil.readFile(listFilePath);
-            memberList = [];
-            for (var i in members) {
-                memberName = members[i];
-                if (memberName !== '') {
-                    memberList.push(memberName);
-                }
-            }
+            memberList = hirumiUtil.readFile(listFilePath);
             session.send('現在' + memberList.length + '人です！');
             session.send('参加予定メンバー：' + memberList.join(hirumiConst.DISPLAY_SEPARATOR));
             return;
@@ -98,16 +89,8 @@ bot.dialog('/', function (session) {
         wordFilePath = hirumiConst.WORD_LIST_DIR + hirumiConst.WORD_LIST_FILE_LETS_GO;
         wasFound = hirumiUtil.findWord(text, wordFilePath);
         if (wasFound) {
-            members = hirumiUtil.readFile(listFilePath);
-            memberList = [];
-            for (var i in members) {
-                memberName = members[i];
-                if (memberName !== '') {
-                    memberList.push(memberName);
-                }
-            }
+            memberList = hirumiUtil.readFile(listFilePath);
             memberList = hirumiUtil.makeMembers(memberList);
-
             session.send('はーい！');
             session.send('メンバーはこちら！');
             for (var i in memberList) {

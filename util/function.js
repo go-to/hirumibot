@@ -50,7 +50,18 @@ exports.readFile = function (filePath) {
     }
     content = content.replace(hirumiConst.LINEFEED_WIN, hirumiConst.LINEFEED);  // convert for Windows
     content = content.replace(hirumiConst.LINEFEED_MAC, hirumiConst.LINEFEED);  // convert for MAC
-    return content.split(hirumiConst.LINEFEED);
+    var contentArr = content.split(hirumiConst.LINEFEED);
+
+    // 重複排除
+    var contentObj = {};
+    for (var i in contentArr) {
+        var data = contentArr[i];
+        if (data === '') {
+            continue;
+        }
+        contentObj[data] = data;
+    }
+    return Object.keys(contentObj).map(function(key){return contentObj[key]});
 };
 
 /**
