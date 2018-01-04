@@ -22,6 +22,7 @@ bot.dialog('/', function (session) {
         var today = hirumiUtil.getToday();
         var text = session.message.text;
         var userName = session.message.user.name;
+        var linefeed = hirumiConst.LINEFEED_DISPLAY;
         var memberList = [];
 
         // 今日日付のファイルがなければ作成する
@@ -82,7 +83,7 @@ bot.dialog('/', function (session) {
             memberList = hirumiUtil.readFile(listFilePath);
             session.send('現在' + memberList.length + '人です！');
             if (memberList.length > 0) {
-                session.send('参加予定メンバー：' + memberList.join(hirumiConst.DISPLAY_SEPARATOR));
+                session.send('【参加予定メンバー】' + linefeed + memberList.join(linefeed));
             }
             return;
         }
@@ -97,7 +98,7 @@ bot.dialog('/', function (session) {
                 session.send('はーい！');
                 session.send('メンバーはこちら！');
                 for (var i in memberList) {
-                    session.send((parseInt(i) + 1) + '班：' + memberList[i].join(hirumiConst.DISPLAY_SEPARATOR));
+                    session.send('【' + (parseInt(i) + 1) + '班】' + linefeed + memberList[i].join(linefeed));
                 }
             } else {
                 session.send('参加者が1人もいません。。。');
@@ -111,6 +112,21 @@ bot.dialog('/', function (session) {
         if (wasFound) {
             hirumiUtil.reset(listFilePath);
             session.send('リセットしたよ！');
+            return;
+        }
+        
+        // ヘルプ系
+        wordFilePath = hirumiConst.WORD_LIST_DIR + hirumiConst.WORD_LIST_FILE_HELP;
+        wasFound = hirumiUtil.findWord(text, wordFilePath);
+        if (wasFound) {
+            var hirumiMention = hirumiConst.HIRUMI_MENTION;
+            session.send('【使い方】' + linefeed
+                + '・参加する　　　　："' + hirumiMention + ' 参加" と投稿します' + linefeed
+                + '・参加を取り消す　："' + hirumiMention + ' 不参加" と投稿します' + linefeed
+                + '・現在の人数を確認："' + hirumiMention + ' 人数は？" と投稿します' + linefeed
+                + '・班分け＆出発する："' + hirumiMention + ' 行くぞ" と投稿します' + linefeed
+                + '上記以外の表現でも反応できる場合があるので、いろいろと試してみてね！'
+            );
             return;
         }
 
