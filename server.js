@@ -1,9 +1,7 @@
 var restify = require('restify');
 var builder = require('botbuilder');
-var fs = require('fs');
-var readline = require('readline');
-
-var FILE_DIR = './files/';
+var hirumiConst = require('./util/const.js');
+var hirumiUtil = require('./util/function.js');
 
 var server = restify.createServer();
 server.listen(process.env.port || process.env.PORT || 3978, function () {
@@ -21,161 +19,120 @@ server.post('/api/messages', connector.listen());
 bot.dialog('/', function (session) {
     try {
 
-        var today = getToday();
+        var today = hirumiUtil.getToday();
         var text = session.message.text;
+        var userName = session.message.user.name;
+        var linefeed = hirumiConst.LINEFEED_DISPLAY;
+        var memberList = [];
 
-        if (text.indexOf('不参加') !== -1 || text.indexOf('cancel') !== -1) {
-            var data = readFile(today);
-            var list = data.split(",");
-            var idx = 0;
-            for (var i in list) {
-                var name = list[i];
-                if (name == session.message.user.name) {
-                    list = list.splice(idx, 1);
-                    break;
+        // 今日日付のファイルがなければ作成する
+        var listFilePath = hirumiConst.FILE_DIR + today + '.txt';
+        if (!hirumiUtil.isExistFile(listFilePath)) {
+            hirumiUtil.createFile(listFilePath, '');
+        }
+
+        /* 入力メッセージの判別 */
+        // どちらでもない系
+        var wordFilePath = hirumiConst.WORD_LIST_DIR + hirumiConst.WORD_LIST_FILE_UNKNOWN;
+        var wasFound = hirumiUtil.findWord(text, wordFilePath);
+        if (wasFound) {
+            session.send('参加ですか？不参加ですか？');
+            return;
+        }
+
+        // 不参加系
+        wordFilePath = hirumiConst.WORD_LIST_DIR + hirumiConst.WORD_LIST_FILE_NON_PARTICIPATE;
+        wasFound = hirumiUtil.findWord(text, wordFilePath);
+        if (wasFound) {
+            wasFound = hirumiUtil.findWord(userName, listFilePath);
+            if (wasFound) {
+                memberList = hirumiUtil.readFile(listFilePath);
+                for (var i in memberList) {
+                    var memberName = memberList[i];
+                    if (memberName === userName) {
+                        memberList.splice(i, 1);
+                        var memberListStr = memberList.join(hirumiConst.LINEFEED);
+                        hirumiUtil.overwriteNameToFile(memberListStr, listFilePath);
+                        break;
+                    }
                 }
-                idx++;
-            }
-            writeNameToFile(today, list.join(","));
-            session.send('参加を取り消したよ！また今度参加してね！');
-            return;
-        }
-
-        if (text.indexOf('参加') !== -1) {
-            writeNameToFile(today, session.message.user.name);
-            var data = readFile(today);
-            var list = data.split(",");
-            session.send('参加を受け付けました！わーい！');
-            return;
-        }
-
-        if (text.indexOf('行くぞ') !== -1 || text.indexOf('いくぞ') !== -1) {
-            var data = readFile(today);
-            var list = data.split(",");
-            var memberList = makeMembers(list);
-
-            session.send('はーい！');
-            session.send('メンバーはこちら！');
-            for (var i in memberList) {
-                session.send(memberList[i].join(", "));
+                session.send(userName + 'さんの参加を取り消したよ！また今度参加してね！');
+            } else {
+                session.send(userName + 'さんはまだ参加表明してないよ！');
             }
             return;
         }
 
-        if (text.indexOf('リセット') !== -1 || text.indexOf('reset') !== -1) {
-            deleteFile(today);
+        // 参加系
+        wordFilePath = hirumiConst.WORD_LIST_DIR + hirumiConst.WORD_LIST_FILE_PARTICIPATE;
+        wasFound = hirumiUtil.findWord(text, wordFilePath);
+        if (wasFound) {
+            var result = hirumiUtil.writeNameToFile(userName, listFilePath);
+            if (result === hirumiConst.RESULT_CODE_SUCCESS) {
+                session.send(userName + 'さんの参加を受け付けました！わーい！');
+            } else if (result === hirumiConst.RESULT_CODE_UNNECESSARY) {
+                session.send(userName + 'さんはすでに参加表明済みだよ！');
+            }
+            return;
+        }
+
+        // いま何人系
+        wordFilePath = hirumiConst.WORD_LIST_DIR + hirumiConst.WORD_LIST_FILE_STATUS;
+        wasFound = hirumiUtil.findWord(text, wordFilePath);
+        if (wasFound) {
+            memberList = hirumiUtil.readFile(listFilePath);
+            session.send('現在' + memberList.length + '人です！');
+            if (memberList.length > 0) {
+                session.send('【参加予定メンバー】' + linefeed + memberList.join(linefeed));
+            }
+            return;
+        }
+
+        // 行くぞ系
+        wordFilePath = hirumiConst.WORD_LIST_DIR + hirumiConst.WORD_LIST_FILE_LETS_GO;
+        wasFound = hirumiUtil.findWord(text, wordFilePath);
+        if (wasFound) {
+            memberList = hirumiUtil.readFile(listFilePath);
+            memberList = hirumiUtil.makeMembers(memberList);
+            if (memberList.length > 0) {
+                session.send('はーい！');
+                session.send('メンバーはこちら！');
+                for (var i in memberList) {
+                    session.send('【' + (parseInt(i) + 1) + '班】' + linefeed + memberList[i].join(linefeed));
+                }
+            } else {
+                session.send('参加者が1人もいません。。。');
+            }
+            return;
+        }
+
+        // リセット系
+        wordFilePath = hirumiConst.WORD_LIST_DIR + hirumiConst.WORD_LIST_FILE_RESET;
+        wasFound = hirumiUtil.findWord(text, wordFilePath);
+        if (wasFound) {
+            hirumiUtil.reset(listFilePath);
             session.send('リセットしたよ！');
             return;
         }
+        
+        // ヘルプ系
+        wordFilePath = hirumiConst.WORD_LIST_DIR + hirumiConst.WORD_LIST_FILE_HELP;
+        wasFound = hirumiUtil.findWord(text, wordFilePath);
+        if (wasFound) {
+            var hirumiMention = hirumiConst.HIRUMI_MENTION;
+            session.send('【使い方】' + linefeed
+                + '・参加する　　　　："' + hirumiMention + ' 参加" と投稿します' + linefeed
+                + '・参加を取り消す　："' + hirumiMention + ' 不参加" と投稿します' + linefeed
+                + '・現在の人数を確認："' + hirumiMention + ' 人数は？" と投稿します' + linefeed
+                + '・班分け＆出発する："' + hirumiMention + ' 行くぞ" と投稿します' + linefeed
+                + '上記以外の表現でも反応できる場合があるので、いろいろと試してみてね！'
+            );
+            return;
+        }
 
-        session.send('＿/＼○_ﾋｬｯ　　ε=＼＿__○ノﾎｰｳ!!　←' + session.message.user.name);
+        session.send('＿/＼○_ﾋｬｯ　　ε=＼＿__○ノﾎｰｳ!!　←' + userName);
 
     } catch (e) {
         session.send('エラーです.しくしく:' + e);
     }
 });
-
-function getToday() {
-    var date = new Date();
-    return [
-        date.getFullYear(),
-        date.getMonth() + 1,
-        date.getDate()
-    ].join('');
-}
-
-// = others =====================================
-
-/**
- * File 名を指定して指定された文字列を追記する
- * @param {String} fileName 
- * @param {String} name 
- */
-function writeNameToFile(fileName, text) {
-    var tmptext = '';
-
-    if (fs.existsSync(FILE_DIR + fileName + '.txt')) {
-
-        var namelist = readFile(fileName).split(',');
-        // すでに追加されている場合は終了
-        if (namelist.indexOf(text) !== -1) {
-            return;
-        }
-        namelist.push(text);
-        tmptext = namelist.join(',');
-
-    } else {
-        tmptext = text;
-    }
-    fs.writeFileSync(FILE_DIR + fileName + '.txt', tmptext, 'utf8');
-}
-
-/**
- * ファイルの読み込み
- * @param {String} fileName 
- * @param {String} text 
- * @param {Function} completionHandler 
- */
-function readFile(fileName) {
-    return fs.readFileSync(FILE_DIR + fileName + ".txt", 'utf8');
-}
-
-/**
- * ファイルの削除
- * @param {String} fileName 
- */
-function deleteFile(fileName) {
-    fs.rmdirSync(FILE_DIR + fileName + '.txt');
-}
-
-/**
- * シャッフルする
- * @param {Array} array 
- */
-function shuffle(array) {
-    var n = array.length, t, i;
-    while (n) {
-        i = Math.floor(Math.random() * n--);
-        t = array[n];
-        array[n] = array[i];
-        array[i] = t;
-    }
-    return array;
-}
-
-/**
- * メンバーのリストを作る
- * @param {Array} list 
- */
-function makeMembers(orgList) {
-
-    // シャッフル
-    var list = shuffle(orgList);
-
-    // 分割
-    var b = list.length;
-    var cnt = 4;
-    var tmpArr = [];
-
-    for (var i = 0; i < Math.ceil(b / cnt); i++) {
-        var j = i * cnt;
-        var p = list.slice(j, j + cnt);
-        tmpArr.push(p);
-    }
-
-    // ここにいれてく
-    var newArr = [];
-
-    // ラストの配列が2人以下の場合は分ける
-    var lastArr = tmpArr.pop();
-    if (lastArr.length <= 2) {
-        // TODO: - 全部で6人の場合に落ちます.力尽きた（AM1:50）
-        for (var i in lastArr) {
-            tmpArr[i].push(lastArr[i]);
-        }
-        newArr = tmpArr;
-    } else {
-        newArr = tmpArr;
-    }
-    return newArr;
-}
