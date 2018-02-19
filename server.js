@@ -1,7 +1,7 @@
 var restify = require('restify');
 var builder = require('botbuilder');
-var hirumiConst = require('./util/const.js');
-var hirumiUtil = require('./util/function.js');
+var hirumiConst = require('./lib/config/const.js');
+var hirumiUtil = require('./lib/function/util.js');
 
 var server = restify.createServer();
 server.listen(process.env.port || process.env.PORT || 3978, function () {
