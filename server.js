@@ -26,7 +26,7 @@ bot.dialog('/', function (session) {
         var memberList = [];
 
         // 今日日付のファイルがなければ作成する
-        var listFilePath = hirumiConst.FILE_DIR + today + '.txt';
+        var listFilePath = hirumiConst.FILE_DIR + today + '-' + session.message.address.conversation.id + '.txt';
         if (!hirumiUtil.isExistFile(listFilePath)) {
             hirumiUtil.createFile(listFilePath, '');
         }
