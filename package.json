@@ -1,6 +1,9 @@
 {
   "name": "hirumibot",
   "version": "1.0.0",
+  "engines": {
+    "node": "9.*"
+  },
   "description": "hirumi bot",
   "main": "server.js",
   "scripts": {
@@ -14,6 +17,8 @@
   "license": "ISC",
   "dependencies": {
     "botbuilder": "^3.12.0",
-    "restify": "^6.3.4"
+    "node-schedule": "^1.3.0",
+    "restify": "^6.3.4",
+    "superagent": "^3.8.3"
   }
 }
