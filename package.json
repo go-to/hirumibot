@@ -2,7 +2,7 @@
   "name": "hirumibot",
   "version": "1.0.0",
   "engines": {
-    "node": "9.*"
+    "node": "10.*"
   },
   "description": "hirumi bot",
   "main": "server.js",
