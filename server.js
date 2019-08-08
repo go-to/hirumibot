@@ -74,7 +74,20 @@ bot.dialog('/', (session) => {
                                                 session.send(message);
                                             }
                                         } else {
-                                            session.send(`＿/＼○_ﾋｬｯ　　ε=＼＿__○ノﾎｰｳ!!　←${userName}`);
+                                            // conversation_id取得系
+                                            wordFilePath = `${hirumiConst.WORD_LIST_DIR}/${hirumiConst.WORD_LIST_FILE_GET_CONVERSATION_ID}`;
+                                            hirumiUtil.findWord(text, wordFilePath)
+                                                .then((result) => {
+                                                    if (result) {
+                                                        session.send(`このグループのconversation_idは↓です！
+                                                        ${conversationId}`);
+                                                    } else {
+                                                        session.send(`＿/＼○_ﾋｬｯ　　ε=＼＿__○ノﾎｰｳ!!　←${userName}`);
+                                                    }
+                                                })
+                                                .catch((err) => {
+                                                    console.log(err);
+                                                });
                                         }
                                     })
                                     .catch((err) => {
