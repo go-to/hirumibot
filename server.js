@@ -19,12 +19,22 @@ const connector = new builder.ChatConnector({
 const bot = new builder.UniversalBot(connector);
 server.post('/api/messages', connector.listen());
 
-// 定期実行
-const job = schedule.scheduleJob(hirumiConst.AUTOPOST_CRON_TIMER, () => {
+/* 定期実行 */
+// 国民の祝日CSV更新
+schedule.scheduleJob(hirumiConst.HOLIDAY_LIST_UPDATE_CRON_TIMER, () => {
+    hirumiUtil.updateHolidayListCsv()
+        .then((result) => {
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+});
+
+// 自動投稿
+schedule.scheduleJob(hirumiConst.AUTOPOST_CRON_TIMER, () => {
     // 送信有無を判定して自動投稿
     autoPost.checkSchedule()
         .then((result) => {
-
         })
         .catch((err) => {
             console.log(err);
